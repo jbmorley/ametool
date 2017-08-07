@@ -1,11 +1,65 @@
 #!/usr/bin/env python
 
 import argparse
+import os
+import struct
+
+
+class Reader(object):
+
+    def __init__(self, path):
+        self._path = path
+        with open(self._path, mode='rb') as fh:
+            self._contents = fh.read()
+            self._offset = 0
+
+    def string(self):
+        length = ord(self.char())
+        string = ""
+        for i in xrange(0, length):
+            string += struct.unpack('s', self._contents[self._offset + i])[0]
+        self._offset += length
+        return string
+
+    def char(self):
+        char = struct.unpack('c', self._contents[self._offset])[0]
+        self._offset += 1
+        return char
 
 
 def main():
     parser = argparse.ArgumentParser(description="Tool for manipulating AME files.")
+    parser.add_argument("file", help="AME file")
     options = parser.parse_args()
+
+    amefile = os.path.abspath(options.file)
+    print amefile
+
+    reader = Reader(path=amefile)
+    print "class = %s" % reader.string()
+    print "metadata = %s" % reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+    print reader.string()
+
+
 
 
 if __name__ == "__main__":
