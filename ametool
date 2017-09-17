@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import os
 import struct
+import sys
+
+
+verbose = '--verbose' in sys.argv[1:] or '-v' in sys.argv[1:]
+logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="[%(levelname)s] %(message)s")
 
 
 class Reader(object):
@@ -33,31 +39,31 @@ def main():
     options = parser.parse_args()
 
     amefile = os.path.abspath(options.file)
-    print amefile
+    logging.info(amefile)
 
     reader = Reader(path=amefile)
-    print "class = %s" % reader.string()
-    print "metadata = %s" % reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
-    print reader.string()
+    logging.info("class = %s" % reader.string())
+    logging.info("metadata = %s" % reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
+    logging.info(reader.string())
 
 
 
