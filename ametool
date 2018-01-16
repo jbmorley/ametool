@@ -5,40 +5,12 @@ import collections
 import logging
 import os
 import pprint
-import struct
 import sys
+
+import io
 
 verbose = '--verbose' in sys.argv[1:] or '-v' in sys.argv[1:]
 logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="[%(levelname)s] %(message)s")
-
-
-class BinaryReader(object):
-
-    def __init__(self, path):
-        self._path = path
-        self.fh = open(self._path, mode='rb')
-
-    def read_int(self):
-        integer = 0
-        shift = 0
-        while True:
-            current = struct.unpack('B', self.fh.read(1))[0]
-            integer |= ((current & 0x7F) << shift)
-            if (current & 128 == 0):
-                break
-            shift += 7
-        return integer
-
-    def read_int32(self):
-        return struct.unpack('i', self.fh.read(4))[0]
-
-    def read_double(self):
-        return struct.unpack('d', self.fh.read(8))[0]
-
-    def read_string(self, title=""):
-        length = self.read_int()
-        string = struct.unpack('%ds' % length, self.fh.read(length))[0]
-        return string
 
 
 def read_metadata(reader):
@@ -80,14 +52,26 @@ def read_metadata(reader):
     metadata['WestBound'] = reader.read_double()
     metadata['EastBound'] = reader.read_double()
     metadata['Url'] = reader.read_string()
+
     return metadata
 
 
-def read_ame(reader):
+def read_ame_normal(reader):
 
-    reader.read_string("Class")
-    metadata = read_metadata(reader)
-    return metadata
+    assert reader.read_string() == "ERN.HazardGrid.AMENormal"
+
+    ame = {}
+    ame['Metadata'] = read_metadata(reader)
+    ame['VariableType'] = reader.read_int32()
+    ame['HazardType'] = reader.read_int16()
+    ame['RandomVariableType'] = reader.read_int32()
+    ame['NumIntensities'] = reader.read_int32()
+    ame['NumScenarios'] = reader.read_int32()
+    ame['NumMoments'] = reader.read_int32()
+
+    # TODO: Read the scenarios.
+
+    return ame
 
 
 def main():
@@ -98,7 +82,7 @@ def main():
     amefile = os.path.abspath(options.file)
     logging.info(amefile)
 
-    ame = read_ame(BinaryReader(path=amefile))
+    ame = read_ame_normal(io.BinaryReader(path=amefile))
     pprint.pprint(ame, indent=2)
 
 
