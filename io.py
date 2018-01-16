@@ -18,6 +18,9 @@ class BinaryReader(object):
             shift += 7
         return integer
 
+    def read_int8(self):
+        return struct.unpack('B', self.fh.read(1))[0]
+
     def read_int16(self):
         return struct.unpack('h', self.fh.read(2))[0]
 
@@ -27,6 +30,10 @@ class BinaryReader(object):
     def read_double(self):
         return struct.unpack('d', self.fh.read(8))[0]
 
+    def read_chars(self, length=1):
+        return struct.unpack('%ds' % length, self.fh.read(length))[0]
+
     def read_string(self):
         length = self.read_7bit_encoded_int32()
         return struct.unpack('%ds' % length, self.fh.read(length))[0]
+

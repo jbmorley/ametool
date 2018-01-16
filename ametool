@@ -56,6 +56,100 @@ def read_metadata(reader):
     return metadata
 
 
+class GRNType(object):
+    BYTE = 1
+    SHORT = 2
+    INTEGER = 3
+    DOUBLE = 4
+    LONG = 5
+    SURFER_6_BINARY = 6
+    SURFER_7_BINARY = 7
+    COLOMBIA = 8
+
+
+def read_mod_grn_type(reader):
+
+    version = reader.read_int8()
+    variant = reader.read_chars(3)
+
+    if variant == "SAA":
+        return GRNType.SURFER_6_BINARY
+    elif variant == "SBB":
+        if version == 1:
+            return GRNType.BYTE
+        elif version == 2:
+            return GRNType.SHORT
+        elif version == 3:
+            return GRNType.INTEGER
+        elif version == 5:
+            return GRNType.DOUBLE
+        elif version == 6:
+            return GRNType.LONG
+        elif version == 68:
+            return GRNType.SURFER_6_BINARY
+    elif variant == "SRB":
+        return GRNType.SURFER_7_BINARY
+    elif variant == "COL":
+        return GRNType.COLOMBIA
+
+    raise AssertionError("Unsupported GRN type %s %d" % (variant, version, ))
+
+
+def read_mod_grn(reader):
+
+    # Read the header.
+
+    grid = {}
+
+    grn_type = read_mod_grn_type(reader)
+
+    if (grn_type == GRNType.SURFER_6_BINARY or
+        grn_type == GRNType.BYTE or
+        grn_type == GRNType.SHORT or
+        grn_type == GRNType.INTEGER or
+        grn_type == GRNType.DOUBLE or
+        grn_type == GRNType.LONG):
+    
+        # Surfer 6 Binary
+        grid['Nx'] = reader.read_int16()
+        grid['Ny'] = reader.read_int16()
+        grid['XLow'] = reader.read_double()
+        grid['XHigh'] = reader.read_double()
+        grid['YLow'] = reader.read_double()
+        grid['YHigh'] = reader.read_double()
+        grid['ZLow'] = reader.read_double()
+        grid['ZHigh'] = reader.read_double()
+
+    elif grn_type == GRNType.SURFER_6_ASCII:
+        print "Surfer 6 ASCII"
+    elif grn_type == GRNType.SURFER_7_BINARY:
+        print "Surfer 7 Binary"
+    elif grn_type == GRNType.COLOMBIA:
+        print "Colombia"
+    else:
+        raise AssertionError("Unsupported GRN type")
+
+    print grid
+
+    return grid
+
+
+def read_scenario_normal(reader, num_intensities, num_moments):
+
+    scenario = {}
+    scenario['Name'] = reader.read_string()
+    scenario['Frequency'] = reader.read_double()
+    scenario['Grid'] = []
+    for intensity_index in xrange(0, num_intensities):
+        current_moments = []
+        for moment_index in xrange(0, num_moments):
+            grid = read_mod_grn(reader)
+            current_moments.append(grid)
+        scenario['Grid'].append(current_moments)
+    
+    return scenario
+
+
 def read_ame_normal(reader):
 
     assert reader.read_string() == "ERN.HazardGrid.AMENormal"
@@ -69,7 +163,11 @@ def read_ame_normal(reader):
     ame['NumScenarios'] = reader.read_int32()
     ame['NumMoments'] = reader.read_int32()
 
-    # TODO: Read the scenarios.
+    scenarios = []
+    for scenario_index in xrange(0, ame['NumScenarios']):
+        scenarios.append(read_scenario_normal(reader, ame['NumIntensities'], ame['NumMoments']))
+
+    ame['Scenarios'] = scenarios
 
     return ame
 
