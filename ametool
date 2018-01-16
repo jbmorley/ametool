@@ -19,37 +19,23 @@ class Reader(object):
 
     def string(self, title=""):
         length = self.int()
-        string = ""
-
-        char = self.char()
-        if char == '\x04':
-            while True:
-                char = self.char()
-                if char == '\x00':
-                    break
-                string += char
-        else:
-            self.fh.seek(-1, 1)
-            string = struct.unpack('%ds' % length, self.fh.read(length))[0]
-
-        # Swallow any nulls.
-        while True:
-            value = struct.unpack('B', self.fh.read(1))[0]
-            if value != 0:
-                self.fh.seek(-1, 1)
-                break
-
-        print "String(%d) -> %s\n%r\n" % (length, title, string)
+        string = struct.unpack('%ds' % length, self.fh.read(length))[0]
+        print "String(%d) -> %s\n%s\n" % (length, title, string)
         return string
 
-    def char(self):
-        char = struct.unpack('c', self.fh.read(1))[0]
-        # print "Char\t%r" % char
-        return char
-
     def int(self):
-        integer = struct.unpack('B', self.fh.read(1))[0]
+        integer = 0
+        shift = 0
+        while True:
+            current = struct.unpack('B', self.fh.read(1))[0]
+            integer |= ((current & 0x7F) << shift)
+            if (current & 128 == 0):
+                break
+            shift += 7
         return integer
+
+    def int32(self):
+        return struct.unpack('i', self.fh.read(4))[0]
 
 
 def main():
@@ -65,19 +51,27 @@ def main():
     # Class
     reader.string("Class")
     reader.string("MDVersion")
-    reader.string()
+    print reader.int32()
     reader.string()
     reader.string()
     reader.string("Title")
-    reader.string()
-    reader.string() 
-    reader.string()
-    reader.string()
-    reader.string()
-    reader.string()
-    reader.string()
-    reader.string()
-    reader.string()
+    reader.string("CreationDateNew")
+    reader.string("Version")
+    reader.string("Abstract")
+    reader.string("IndividualName")
+    reader.string("Organization")
+    reader.string("PositionName")
+    reader.string("Phone")
+    reader.string("Fax")
+    reader.string("Address")
+    reader.string("City")
+    reader.string("Administrative Area")
+    reader.string("Zip Code")
+    reader.string("Country")
+    reader.string("Email")
+    reader.string("KeyWord")
+    reader.string("AccessConstraints")
+    reader.string("UseConstraints")
 
     exit()
 

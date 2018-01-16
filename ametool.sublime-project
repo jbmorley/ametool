@@ -12,7 +12,7 @@
     [
       {
         "name": "run",
-        "cmd": ["./ametool", "/Users/jbmorley/Desktop/AME/Cyclonic Wind_South Indian.AME"],
+        "cmd": ["./ametool", "examples/Cyclonic Wind_South Indian.AME"],
         "working_dir": "${project_path}"
       }
     ]
