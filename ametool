@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
 import argparse
+import collections
 import logging
 import os
+import pprint
 import struct
 import sys
-
 
 verbose = '--verbose' in sys.argv[1:] or '-v' in sys.argv[1:]
 logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="[%(levelname)s] %(message)s")
 
 
-class Reader(object):
+class BinaryReader(object):
 
     def __init__(self, path):
         self._path = path
@@ -20,7 +21,6 @@ class Reader(object):
     def string(self, title=""):
         length = self.int()
         string = struct.unpack('%ds' % length, self.fh.read(length))[0]
-        print "String(%d) -> %s\n%s\n" % (length, title, string)
         return string
 
     def int(self):
@@ -37,6 +37,58 @@ class Reader(object):
     def int32(self):
         return struct.unpack('i', self.fh.read(4))[0]
 
+    def double(self):
+        return struct.unpack('d', self.fh.read(8))[0]
+
+
+def read_metadata(reader):
+
+    assert reader.string() == "MDVersion2"
+
+    intensities = []
+    for i in xrange(0, reader.int32()):
+        intensity = {}
+        intensity['Id'] = i
+        intensity['Description'] = reader.string()
+        intensity['Units'] = reader.string()
+        intensities.append(intensity)
+
+    metadata = {}
+    metadata['Intensities'] = intensities
+    metadata['title'] = reader.string()
+    metadata['creation_date_new'] = reader.string()
+    metadata['version'] = reader.string()
+    metadata['abstract'] = reader.string()
+    metadata['individual_name'] = reader.string()
+    metadata['organization'] = reader.string()
+    metadata['position_name'] = reader.string()
+    metadata['phone'] = reader.string()
+    metadata['fax'] = reader.string()
+    metadata['address'] = reader.string()
+    metadata['city'] = reader.string()
+    metadata['administrative_area'] = reader.string()
+    metadata['zip_code'] = reader.string()
+    metadata['country'] = reader.string()
+    metadata['email'] = reader.string()
+    metadata['key_word'] = reader.string()
+    metadata['access_constraints'] = reader.string()
+    metadata['use_constraints'] = reader.string()
+    metadata['language'] = reader.string()
+    metadata['character_set'] = reader.string()
+    metadata['north_bound'] = reader.double()
+    metadata['south_bound'] = reader.double()
+    metadata['west_bound'] = reader.double()
+    metadata['east_bound'] = reader.double()
+    metadata['url'] = reader.string()
+    return metadata
+
+
+def read_ame(reader):
+
+    reader.string("Class")
+    metadata = read_metadata(reader)
+    return metadata
+
 
 def main():
     parser = argparse.ArgumentParser(description="Tool for manipulating AME files.")
@@ -46,34 +98,8 @@ def main():
     amefile = os.path.abspath(options.file)
     logging.info(amefile)
 
-    reader = Reader(path=amefile)
-
-    # Class
-    reader.string("Class")
-    reader.string("MDVersion")
-    print reader.int32()
-    reader.string()
-    reader.string()
-    reader.string("Title")
-    reader.string("CreationDateNew")
-    reader.string("Version")
-    reader.string("Abstract")
-    reader.string("IndividualName")
-    reader.string("Organization")
-    reader.string("PositionName")
-    reader.string("Phone")
-    reader.string("Fax")
-    reader.string("Address")
-    reader.string("City")
-    reader.string("Administrative Area")
-    reader.string("Zip Code")
-    reader.string("Country")
-    reader.string("Email")
-    reader.string("KeyWord")
-    reader.string("AccessConstraints")
-    reader.string("UseConstraints")
-
-    exit()
+    ame = read_ame(BinaryReader(path=amefile))
+    pprint.pprint(ame, indent=2)
 
 
 if __name__ == "__main__":
