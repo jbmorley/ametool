@@ -18,12 +18,7 @@ class BinaryReader(object):
         self._path = path
         self.fh = open(self._path, mode='rb')
 
-    def string(self, title=""):
-        length = self.int()
-        string = struct.unpack('%ds' % length, self.fh.read(length))[0]
-        return string
-
-    def int(self):
+    def read_int(self):
         integer = 0
         shift = 0
         while True:
@@ -34,58 +29,63 @@ class BinaryReader(object):
             shift += 7
         return integer
 
-    def int32(self):
+    def read_int32(self):
         return struct.unpack('i', self.fh.read(4))[0]
 
-    def double(self):
+    def read_double(self):
         return struct.unpack('d', self.fh.read(8))[0]
+
+    def read_string(self, title=""):
+        length = self.read_int()
+        string = struct.unpack('%ds' % length, self.fh.read(length))[0]
+        return string
 
 
 def read_metadata(reader):
 
-    assert reader.string() == "MDVersion2"
+    assert reader.read_string() == "MDVersion2"
 
     intensities = []
-    for i in xrange(0, reader.int32()):
+    for i in xrange(0, reader.read_int32()):
         intensity = {}
         intensity['Id'] = i
-        intensity['Description'] = reader.string()
-        intensity['Units'] = reader.string()
+        intensity['Description'] = reader.read_string()
+        intensity['Units'] = reader.read_string()
         intensities.append(intensity)
 
     metadata = {}
     metadata['Intensities'] = intensities
-    metadata['Title'] = reader.string()
-    metadata['CreationDateNew'] = reader.string()
-    metadata['Version'] = reader.string()
-    metadata['Abstract'] = reader.string()
-    metadata['IndividualName'] = reader.string()
-    metadata['Organization'] = reader.string()
-    metadata['PositionName'] = reader.string()
-    metadata['Phone'] = reader.string()
-    metadata['Fax'] = reader.string()
-    metadata['Address'] = reader.string()
-    metadata['City'] = reader.string()
-    metadata['AdministrativeArea'] = reader.string()
-    metadata['ZipCode'] = reader.string()
-    metadata['Country'] = reader.string()
-    metadata['Email'] = reader.string()
-    metadata['KeyWord'] = reader.string()
-    metadata['AccessConstraints'] = reader.string()
-    metadata['UseConstraints'] = reader.string()
-    metadata['Language'] = reader.string()
-    metadata['CharacterSet'] = reader.string()
-    metadata['NorthBound'] = reader.double()
-    metadata['SouthBound'] = reader.double()
-    metadata['WestBound'] = reader.double()
-    metadata['EastBound'] = reader.double()
-    metadata['Url'] = reader.string()
+    metadata['Title'] = reader.read_string()
+    metadata['CreationDateNew'] = reader.read_string()
+    metadata['Version'] = reader.read_string()
+    metadata['Abstract'] = reader.read_string()
+    metadata['IndividualName'] = reader.read_string()
+    metadata['Organization'] = reader.read_string()
+    metadata['PositionName'] = reader.read_string()
+    metadata['Phone'] = reader.read_string()
+    metadata['Fax'] = reader.read_string()
+    metadata['Address'] = reader.read_string()
+    metadata['City'] = reader.read_string()
+    metadata['AdministrativeArea'] = reader.read_string()
+    metadata['ZipCode'] = reader.read_string()
+    metadata['Country'] = reader.read_string()
+    metadata['Email'] = reader.read_string()
+    metadata['KeyWord'] = reader.read_string()
+    metadata['AccessConstraints'] = reader.read_string()
+    metadata['UseConstraints'] = reader.read_string()
+    metadata['Language'] = reader.read_string()
+    metadata['CharacterSet'] = reader.read_string()
+    metadata['NorthBound'] = reader.read_double()
+    metadata['SouthBound'] = reader.read_double()
+    metadata['WestBound'] = reader.read_double()
+    metadata['EastBound'] = reader.read_double()
+    metadata['Url'] = reader.read_string()
     return metadata
 
 
 def read_ame(reader):
 
-    reader.string("Class")
+    reader.read_string("Class")
     metadata = read_metadata(reader)
     return metadata
 
