@@ -97,12 +97,9 @@ def read_mod_grn_type(reader):
 
 def read_mod_grn(reader):
 
-    # Read the header.
-
     grid = {}
 
     grn_type = read_mod_grn_type(reader)
-
     if (grn_type == GRNType.SURFER_6_BINARY or
         grn_type == GRNType.BYTE or
         grn_type == GRNType.SHORT or
