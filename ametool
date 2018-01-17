@@ -109,7 +109,7 @@ def read_mod_grn(reader):
         grn_type == GRNType.INTEGER or
         grn_type == GRNType.DOUBLE or
         grn_type == GRNType.LONG):
-    
+
         # Surfer 6 Binary
         grid['Nx'] = reader.read_int16()
         grid['Ny'] = reader.read_int16()
@@ -121,15 +121,23 @@ def read_mod_grn(reader):
         grid['ZHigh'] = reader.read_double()
 
     elif grn_type == GRNType.SURFER_6_ASCII:
-        print "Surfer 6 ASCII"
+        raise AssertionError("Surfer 6 ASCII")
     elif grn_type == GRNType.SURFER_7_BINARY:
-        print "Surfer 7 Binary"
+        raise AssertionError("Surfer 7 Binary")
     elif grn_type == GRNType.COLOMBIA:
-        print "Colombia"
+        raise AssertionError("Colombia")
     else:
         raise AssertionError("Unsupported GRN type")
 
-    print grid
+    read_method = None
+    if (grn_type == GRNType.SURFER_6_BINARY):
+        read_method = reader.read_int8
+    else:
+        raise AssertionError("Unsupported GRN type %d" % (grn_type, ))
+
+    for y in xrange(0, grid['Ny']):
+        for x in xrange(0, grid['Nx']):
+            print read_method()
 
     return grid
 
