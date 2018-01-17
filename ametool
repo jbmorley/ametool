@@ -131,13 +131,17 @@ def read_mod_grn(reader):
 
     read_method = None
     if (grn_type == GRNType.SURFER_6_BINARY):
-        read_method = reader.read_int8
+        read_method = reader.read_single
     else:
         raise AssertionError("Unsupported GRN type %d" % (grn_type, ))
 
+    values = []
     for y in xrange(0, grid['Ny']):
+        y_values = []
         for x in xrange(0, grid['Nx']):
-            print read_method()
+            y_values.append(read_method())
+        values.append(y_values)
+    grid['ZValues'] = values
 
     return grid
 

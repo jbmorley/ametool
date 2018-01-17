@@ -30,6 +30,9 @@ class BinaryReader(object):
     def read_double(self):
         return struct.unpack('d', self.fh.read(8))[0]
 
+    def read_single(self):
+        return struct.unpack('f', self.fh.read(4))[0]
+
     def read_chars(self, length=1):
         return struct.unpack('%ds' % length, self.fh.read(length))[0]
 
