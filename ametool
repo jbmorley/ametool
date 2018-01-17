@@ -6,6 +6,13 @@ import logging
 import os
 import pprint
 import sys
+import json
+
+import numpy
+import libtiff
+import tifffile
+
+from PIL import Image
 
 import io
 
@@ -132,13 +139,25 @@ def read_mod_grn(reader):
     else:
         raise AssertionError("Unsupported GRN type %d" % (grn_type, ))
 
+    data = numpy.ones((grid['Nx'], grid['Ny']), dtype=numpy.float)
+
     values = []
     for y in xrange(0, grid['Ny']):
-        y_values = []
         for x in xrange(0, grid['Nx']):
-            y_values.append(read_method())
-        values.append(y_values)
-    grid['ZValues'] = values
+            value = read_method()
+            data[x, y] = value
+
+    # tiff = libtiff.TIFF.open('scenario.tif', mode='w')
+    # tiff.write_image(data, compression='lzw')
+    # tiff.close()
+
+    # tifffile.imsave('scenario.tiff', data)
+
+    img = Image.fromarray(data)
+    img.save('pil.tiff')
+
+    print grid
+    exit()
 
     return grid
 
@@ -190,7 +209,7 @@ def main():
     logging.info(amefile)
 
     ame = read_ame_normal(io.BinaryReader(path=amefile))
-    pprint.pprint(ame, indent=2)
+    print json.dumps(ame, indent=4)
 
 
 if __name__ == "__main__":
