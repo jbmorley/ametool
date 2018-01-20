@@ -219,7 +219,7 @@ def read_ame_normal(reader):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Tool for manipulating AME files.")
+    parser = argparse.ArgumentParser(description="Tool for unpacking AME files.")
     parser.add_argument("input", help="AME file")
     parser.add_argument("output", help="output directory")
     options = parser.parse_args()
