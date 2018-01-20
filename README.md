@@ -1,5 +1,6 @@
 # ametool
-Tool for manipulating AME files
+
+Tool for unpacking AME files.
 
 ## Example Data
 
