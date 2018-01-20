@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
 import argparse
+import codecs
 import collections
 import logging
 import os
 import pprint
 import sys
-import json
 
 import numpy
-import libtiff
-import tifffile
+import simplejson as json
 
 from PIL import Image
 
@@ -18,6 +17,31 @@ import io
 
 verbose = '--verbose' in sys.argv[1:] or '-v' in sys.argv[1:]
 logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="[%(levelname)s] %(message)s")
+
+
+class Chdir(object):
+
+    def __init__(self, path):
+        self.path = path
+
+    def __enter__(self):
+        self._pwd = os.getcwd()
+        os.chdir(self.path)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self._pwd)
+
+
+class GRNType(object):
+    BYTE = 1
+    SHORT = 2
+    INTEGER = 3
+    DOUBLE = 4
+    LONG = 5
+    SURFER_6_BINARY = 6
+    SURFER_7_BINARY = 7
+    COLOMBIA = 8
 
 
 def read_metadata(reader):
@@ -63,17 +87,6 @@ def read_metadata(reader):
     return metadata
 
 
-class GRNType(object):
-    BYTE = 1
-    SHORT = 2
-    INTEGER = 3
-    DOUBLE = 4
-    LONG = 5
-    SURFER_6_BINARY = 6
-    SURFER_7_BINARY = 7
-    COLOMBIA = 8
-
-
 def read_mod_grn_type(reader):
 
     version = reader.read_int8()
@@ -100,6 +113,17 @@ def read_mod_grn_type(reader):
         return GRNType.COLOMBIA
 
     raise AssertionError("Unsupported GRN type %s %d" % (variant, version, ))
+
+
+def save_grid(identifier, grid):
+    img = Image.fromarray(grid['data'])
+    path = '%s.tiff' % (identifier, )
+    img.save(path)
+    output = dict(grid)
+    del output['data']
+    output['Path'] = path
+    with open('%s.json' % (identifier, ), 'w') as fh:
+        json.dump(output, fh, indent=4, ensure_ascii=False, encoding="utf-8")
 
 
 def read_mod_grn(reader):
@@ -146,23 +170,15 @@ def read_mod_grn(reader):
         for x in xrange(0, grid['Nx']):
             value = read_method()
             data[x, y] = value
+    grid['data'] = data
 
-    # tiff = libtiff.TIFF.open('scenario.tif', mode='w')
-    # tiff.write_image(data, compression='lzw')
-    # tiff.close()
-
-    # tifffile.imsave('scenario.tiff', data)
-
-    img = Image.fromarray(data)
-    img.save('pil.tiff')
-
-    print grid
-    exit()
+    del grid['Nx']
+    del grid['Ny']
 
     return grid
 
 
-def read_scenario_normal(reader, num_intensities, num_moments):
+def read_scenario_normal(reader, scenario_index, num_intensities, num_moments):
 
     scenario = {}
     scenario['Name'] = reader.read_string()
@@ -172,7 +188,9 @@ def read_scenario_normal(reader, num_intensities, num_moments):
         current_moments = []
         for moment_index in xrange(0, num_moments):
             grid = read_mod_grn(reader)
-            current_moments.append(grid)
+            identifier = "scenario-%03d-intensity-%03d-moment-%03d" % (scenario_index, intensity_index, moment_index)
+            save_grid(identifier, grid)
+            current_moments.append("%s.json" % (identifier, ))
         scenario['Grid'].append(current_moments)
     
     return scenario
@@ -193,7 +211,7 @@ def read_ame_normal(reader):
 
     scenarios = []
     for scenario_index in xrange(0, ame['NumScenarios']):
-        scenarios.append(read_scenario_normal(reader, ame['NumIntensities'], ame['NumMoments']))
+        scenarios.append(read_scenario_normal(reader, scenario_index, ame['NumIntensities'], ame['NumMoments']))
 
     ame['Scenarios'] = scenarios
 
@@ -202,14 +220,21 @@ def read_ame_normal(reader):
 
 def main():
     parser = argparse.ArgumentParser(description="Tool for manipulating AME files.")
-    parser.add_argument("file", help="AME file")
+    parser.add_argument("input", help="AME file")
+    parser.add_argument("output", help="output directory")
     options = parser.parse_args()
 
-    amefile = os.path.abspath(options.file)
-    logging.info(amefile)
+    input = os.path.abspath(options.input)
+    output = os.path.abspath(options.output)
 
-    ame = read_ame_normal(io.BinaryReader(path=amefile))
-    print json.dumps(ame, indent=4)
+    if not os.path.isdir(output):
+        os.makedirs(output)
+
+    logging.info("Checking %s...", input)
+    with Chdir(output):
+        ame = read_ame_normal(io.BinaryReader(path=input))
+        with codecs.open('ame.json', 'w', 'utf-8') as fh:
+            json.dump(ame, fh, indent=4, ensure_ascii=False, encoding="utf-8")
 
 
 if __name__ == "__main__":
